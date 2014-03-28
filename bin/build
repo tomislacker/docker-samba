@@ -1,7 +1,15 @@
 #!/bin/bash
 . $PWD/docker-samba.conf
 
-docker build -t ${CONTAINER_PREFIX}/samba-base samba-base
-docker build -t ${CONTAINER_PREFIX}/samba-smbd samba-smbd
-docker build -t ${CONTAINER_PREFIX}/samba-nmbd samba-nmbd
-docker build -t ${CONTAINER_PREFIX}/samba-users samba-users
+REMOVE_STRING=
+echo $@ | egrep -- "-R" >&/dev/null && REMOVE_STRING="-rm "
+
+if [ -z "$REMOVE_STRING" ]; then
+	echo -e "###\n# Removing cached layers when complete...\n###" >&2
+	sleep 2
+fi
+
+docker build ${REMOVE_STRING} -t ${CONTAINER_PREFIX}/samba-base samba-base
+docker build ${REMOVE_STRING} -t ${CONTAINER_PREFIX}/samba-smbd samba-smbd
+docker build ${REMOVE_STRING} -t ${CONTAINER_PREFIX}/samba-nmbd samba-nmbd
+docker build ${REMOVE_STRING} -t ${CONTAINER_PREFIX}/samba-users samba-users
