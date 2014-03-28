@@ -2,12 +2,14 @@
 . etc/defaults/docker
 . $PWD/docker-samba.conf
 
-if ! [ -d var/lib/samba ]; then 
+if ! [ -d var/lib/samba ]; then
+  echo -e "###\n# Creating basic var/lib/samba\n###"
   mkdir -p var/lib
   docker run -a stdout ${CONTAINER_PREFIX}/samba-base tar c /var/lib/samba | 
     tar xvC var/lib/ 
 fi
 
+echo -e "###\n# Launching smbd daemon\n###"
 docker run -d \
   -v $PWD/etc/samba:/etc/samba \
   -v $PWD/etc:/var/lib/extrausers \
@@ -15,8 +17,14 @@ docker run -d \
   -v ${GUEST_DIR}:/mnt/guest \
   -v ${SHARE_DIR}:/mnt/shared \
   -v ${HOME_DIR}:/home \
+  -p 135:135 \
+  -p 139:139 \
+  -p 445:445 \
   ${CONTAINER_PREFIX}/samba-smbd $@
 
+echo -e "###\n# Launching nmbd daemon\n###"
 docker run -d \
   -v $PWD/etc/samba:/etc/samba \
+  -p 137:137/udp \
+  -p 138:138/udp \
   ${CONTAINER_PREFIX}/samba-nmbd $@

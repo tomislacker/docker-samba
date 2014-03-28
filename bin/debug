@@ -1,0 +1,42 @@
+#!/bin/bash
+. etc/defaults/docker
+. $PWD/docker-samba.conf
+
+if ! [ -d var/lib/samba ]; then
+  echo -e "###\n# Creating basic var/lib/samba\n###"
+  mkdir -p var/lib
+  docker run -a stdout ${CONTAINER_PREFIX}/samba-base tar c /var/lib/samba | 
+    tar xvC var/lib/ 
+fi
+
+container=${1:-UNKNOWN}
+
+case $container in
+	smbd)
+		echo -e "###\n# Launching smbd daemon\n###"
+		docker run \
+		  -i --entrypoint=/bin/bash \
+		  -v $PWD/etc/samba:/etc/samba \
+		  -v $PWD/etc:/var/lib/extrausers \
+		  -v $PWD/var/lib/samba:/var/lib/samba \
+		  -v ${GUEST_DIR}:/mnt/guest \
+		  -v ${SHARE_DIR}:/mnt/shared \
+		  -v ${HOME_DIR}:/home \
+		  -p 135:135 \
+		  -p 139:139 \
+		  -p 445:445 \
+		  ${CONTAINER_PREFIX}/samba-smbd - 
+		;;
+	nmbd)
+		echo -e "###\n# Launching nmbd daemon\n###"
+		docker run -i \
+		  -v $PWD/etc/samba:/etc/samba \
+		  -p 137:137/udp \
+		  -p 138:138/udp \
+		  ${CONTAINER_PREFIX}/samba-nmbd /bin/bash
+		;;
+	*)
+		echo "Unknown container name '${container}'" >&2
+		exit 100
+		;;
+esac
