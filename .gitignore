@@ -4,3 +4,8 @@
 # Ignore vim swap files
 *.swp
 var
+
+# Ignore user configs
+etc/group
+etc/etc/passwd
+etc/shadow
